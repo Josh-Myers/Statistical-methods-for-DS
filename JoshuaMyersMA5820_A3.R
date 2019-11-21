@@ -1,7 +1,7 @@
 # assessment 3: R code
 
 # import packages----
-library(ggplot2)
+library(tidyverse)
 
 # question 1----
 # The lifetime of a particular type of TV follows a normal distribution: mean = 4800 hours, and standard deviation (sd) = 400 hours.
@@ -38,50 +38,25 @@ beta_df = read.csv('beta.csv')
 str(beta_df)
 
 # b. exploratory data analysis
-# put data in long form for the boxplot plot
-beta_df_long = beta_df %>% 
-  pivot_longer(cols = c(pre, post), names_to = 'state') 
-# make pre the first level - plot makes more sense if pre is first on x-axis
-beta_df_long$state = factor(beta_df_long$state, levels = c('pre', 'post'))
-
-# density plots of each variable (pre, post, dif)
-beta_density = beta_df_long %>% 
-  ggplot(aes(x = value, colour=state, fill=state)) +
-  geom_density(alpha=0.6) +
+# density plot of dif 
+beta_density = beta_df %>% 
+  ggplot(aes(x = dif)) +
+  geom_density(colour='lightblue', fill='lightblue') +
   scale_x_continuous(limits = c(0, 100), labels = c(0, 25, 50, 75, 100)) 
 # pre looks fairly normal, and post also apart from extreme outlier
 # variance for post looks higher than pre, however
 
 # qq plot
-beta_qq = beta_df_long %>% 
-  ggplot(aes(sample=value, colour=state)) +
+beta_qq = beta_df %>% 
+  ggplot(aes(sample=dif)) +
   stat_qq() +
   stat_qq_line()
-# overall not too bad, apart from extreme outlier for post
-
-# box plot 
-beta_box = beta_df_long %>% 
-  ggplot(aes(x = state, y = value, fill=state, colour=state)) +
-  geom_jitter(width=0.16) +
-  geom_boxplot(colour='black', alpha=0.4) +
-  scale_y_log10() # put log axis to better see distribution of non-outliers
-# there is very strong separation between the groups
-
-# statistical test of normality 
-shapiro.test(beta_df$pre) # not significant (p = 0.5), no evidence that not normal 
-shapiro.test(beta_df$post) # significant (0 < 0.0001), evidence of deviation from normality
-
-# test for equal variance
-bartlett.test(value~state, beta_df_long) # significant, evidence of unequal variance
-
+# there is an extreme outlier 
 # there is one extreme outlier, however, I do not wish to remove it because it may be a genuine result
 # therefore, I will analyse with non-parametric method
 # Wilcoxon matched-pairs signed-ranks test, to test if there is a statistically significant difference between pre and post
-wilcox.test(beta_df$pre, beta_df$post, paired = TRUE, alternative = "less") # less because we hypothesise pre - post < 0
-# strong evidence of an effect
-
-# could also do single sample test using dif (is it >0)
 wilcox.test(beta_df$dif, alternative = "greater") # greater because we hypothesise diff is positive (post - pre)
+# strong evidence of an effect
 
 # question 3
 plant_df = PlantGrowth
